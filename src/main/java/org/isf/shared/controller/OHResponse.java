@@ -1,58 +1,27 @@
 package org.isf.shared.controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.MultiValueMap;
+
+import org.isf.shared.controller.dto.*;
 
 import java.util.Map;
 
-public class OHResponse extends ResponseEntity<OHResponseDTO> {
+public final class OHResponse {
 
-    public OHResponse(HttpStatus status) {
-        super(status);
+    public static OHSuccessDTO success() {
+        return new OHSuccessDTO();
     }
 
-    public OHResponse(OHResponseDTO body, HttpStatus status) {
-        super(body, status);
+    public static <T> OHSuccessWrapperDTO<T> success(T response) {
+        return new OHSuccessWrapperDTO<>(response);
     }
 
-    public OHResponse(MultiValueMap<String, String> headers, HttpStatus status) {
-        super(headers, status);
+    public static OHFailureDTO failure(OHResponseCode responseCode, String message) {
+        return new OHFailureDTO(responseCode, message);
     }
 
-    public OHResponse(OHResponseDTO body, MultiValueMap<String, String> headers, HttpStatus status) {
-        super(body, headers, status);
+    public static OHValidationErrorDTO failure(String message, Map<String, Object> validationErrors, OHResponseCode responseCode) {
+        return new OHValidationErrorDTO(message, validationErrors, responseCode);
     }
 
-    public static OHResponse success(HttpStatus httpStatus) {
-        return new OHResponse(new OHResponseDTO(OHResponseType.SUCCESS, OHResponseCode.SUCCESS), httpStatus);
-    }
-
-    public static OHResponse info() {
-        return new OHResponse(new OHResponseDTO(OHResponseType.INFO, OHResponseCode.SUCCESS), HttpStatus.OK);
-    }
-
-    public static OHResponse warning() {
-        return new OHResponse(new OHResponseDTO(OHResponseType.WARNING, OHResponseCode.SUCCESS), HttpStatus.OK);
-    }
-
-    public static OHResponse error(OHResponseCode responseCode, HttpStatus httpStatus) {
-        return new OHResponse(new OHResponseDTO(OHResponseType.ERROR, responseCode), httpStatus);
-    }
-
-    public <T> OHResponse withData(T data) {
-        ((OHResponseDTO) this.getBody()).setResponse(data);
-        return this;
-    }
-
-    public OHResponse withMesage(String message) {
-        ((OHResponseDTO) this.getBody()).setMessage(message);
-        return this;
-    }
-
-    public OHResponse withValidationErrors(Map<String, Object> validationErrors) {
-        ((OHResponseDTO) this.getBody()).setValidationErrors(validationErrors);
-        return this;
-    }
 
 }

@@ -1,9 +1,9 @@
 package org.isf.shared.exceptions;
 
 import org.isf.shared.controller.OHResponse;
-import org.isf.shared.controller.OHResponseCode;
-import org.isf.shared.controller.OHResponseDTO;
-import org.isf.shared.controller.OHResponseType;
+import org.isf.shared.controller.dto.OHFailureDTO;
+import org.isf.shared.controller.dto.OHResponseCode;
+import org.isf.shared.controller.dto.OHValidationErrorDTO;
 import org.isf.utils.exception.*;
 import org.isf.utils.exception.model.OHExceptionMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,11 +13,11 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -36,51 +36,58 @@ public class OHResponseEntityExceptionHandler extends ResponseEntityExceptionHan
     private MessageSource messageSource;
 
     @ExceptionHandler(value = {OHDataValidationException.class})
-    protected OHResponse handleOHServiceValidationException(OHDataValidationException ex, Locale locale) {
+    protected OHFailureDTO handleOHServiceValidationException(OHDataValidationException ex, Locale locale) {
         final Map<String, Object> errors = ex.getMessages().stream().collect(Collectors.toMap(OHExceptionMessage::getMessage, e -> messageSource.getMessage(e.getMessage(), null, locale)));
-        return OHResponse.error(OHResponseCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST).withValidationErrors(errors);
+        return OHResponse.failure(OHResponseCode.VALIDATION_ERROR.getValue(), errors, OHResponseCode.VALIDATION_ERROR);
     }
 
     @ExceptionHandler(value = {OHReportException.class})
-    protected OHResponse handleReportException(OHReportException ex, Locale locale) {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    protected OHFailureDTO handleReportException(OHReportException ex, Locale locale) {
         String message = ex.getMessages().stream().map(m -> messageSource.getMessage(m.getMessage(), null, locale)).findFirst().orElse(OHResponseCode.REPORT_ERROR.getValue());
-        return OHResponse.error(OHResponseCode.REPORT_ERROR, HttpStatus.INTERNAL_SERVER_ERROR).withMesage(message);
+        return OHResponse.failure(OHResponseCode.REPORT_ERROR, message);
     }
 
     @ExceptionHandler(value = {OHInvalidSQLException.class})
-    protected OHResponse handleInvalidSqlException(OHInvalidSQLException ex, Locale locale) {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    protected OHFailureDTO handleInvalidSqlException(OHInvalidSQLException ex, Locale locale) {
         String message = ex.getMessages().stream().map(m -> messageSource.getMessage(m.getMessage(), null, locale)).findFirst().orElse(OHResponseCode.INVALID_SQL_ERROR.getValue());
-        return OHResponse.error(OHResponseCode.INVALID_SQL_ERROR, HttpStatus.INTERNAL_SERVER_ERROR).withMesage(message);
+        return OHResponse.failure(OHResponseCode.INVALID_SQL_ERROR, message);
     }
 
     @ExceptionHandler(value = {OHOperationNotAllowedException.class})
-    protected OHResponse handleOHServiceOperationNotAllowedException(OHOperationNotAllowedException ex, Locale locale) {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    protected OHValidationErrorDTO handleOHServiceOperationNotAllowedException(OHOperationNotAllowedException ex, Locale locale) {
         final Map<String, Object> errors = ex.getMessages().stream().collect(Collectors.toMap(OHExceptionMessage::getMessage, e -> messageSource.getMessage(e.getMessage(), null, locale)));
-        return OHResponse.error(OHResponseCode.OPERATION_NOT_ALLOWED_ERROR, HttpStatus.INTERNAL_SERVER_ERROR).withValidationErrors(errors);
+        return OHResponse.failure(OHResponseCode.VALIDATION_ERROR.getValue(), errors, OHResponseCode.OPERATION_NOT_ALLOWED_ERROR);
     }
 
     @ExceptionHandler(value = {OHDicomException.class})
-    protected OHResponse handleDicomException(OHDicomException ex, Locale locale) {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    protected OHFailureDTO handleDicomException(OHDicomException ex, Locale locale) {
         String message = ex.getMessages().stream().map(m -> messageSource.getMessage(m.getMessage(), null, locale)).findFirst().orElse(OHResponseCode.DICOM_ERROR.getValue());
-        return OHResponse.error(OHResponseCode.DICOM_ERROR, HttpStatus.INTERNAL_SERVER_ERROR).withMesage(message);
+        return OHResponse.failure(OHResponseCode.DICOM_ERROR, message);
     }
 
     @ExceptionHandler(value = {OHDBConnectionException.class})
-    protected OHResponse handleDbConnectionException(OHDBConnectionException ex, Locale locale) {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    protected OHFailureDTO handleDbConnectionException(OHDBConnectionException ex, Locale locale) {
         String message = ex.getMessages().stream().map(m -> messageSource.getMessage(m.getMessage(), null, locale)).findFirst().orElse(OHResponseCode.DATABASE_CONNECTION_ERROR.getValue());
-        return OHResponse.error(OHResponseCode.DATABASE_CONNECTION_ERROR, HttpStatus.INTERNAL_SERVER_ERROR).withMesage(message);
+        return OHResponse.failure(OHResponseCode.DATABASE_CONNECTION_ERROR, message);
     }
 
     @ExceptionHandler(value = {OHDataIntegrityViolationException.class})
-    protected OHResponse handleDataIntegrityViolationException(OHDataIntegrityViolationException ex, Locale locale) {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    protected OHFailureDTO handleDataIntegrityViolationException(OHDataIntegrityViolationException ex, Locale locale) {
         String message = ex.getMessages().stream().map(m -> messageSource.getMessage(m.getMessage(), null, locale)).findFirst().orElse(OHResponseCode.DATA_INTEGRITY_ERROR.getValue());
-        return OHResponse.error(OHResponseCode.DATA_INTEGRITY_ERROR, HttpStatus.INTERNAL_SERVER_ERROR).withMesage(message);
+        return OHResponse.failure(OHResponseCode.DATA_INTEGRITY_ERROR, message);
     }
 
     @ExceptionHandler(value = {OHDataLockFailureException.class})
-    protected OHResponse handleDbLockFailureException(OHDataLockFailureException ex, Locale locale) {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    protected OHFailureDTO handleDbLockFailureException(OHDataLockFailureException ex, Locale locale) {
         String message = ex.getMessages().stream().map(m -> messageSource.getMessage(m.getMessage(), null, locale)).findFirst().orElse(OHResponseCode.DATA_LOCK_ERROR.getValue());
-        return OHResponse.error(OHResponseCode.DATA_INTEGRITY_ERROR, HttpStatus.INTERNAL_SERVER_ERROR).withMesage(message);
+        return OHResponse.failure(OHResponseCode.DATA_LOCK_ERROR, message);
     }
 
     @Override
@@ -94,33 +101,24 @@ public class OHResponseEntityExceptionHandler extends ResponseEntityExceptionHan
         for (final ObjectError error : ex.getBindingResult().getGlobalErrors()) {
             errors.put(error.getObjectName(), error.getDefaultMessage());
         }
-        final OHResponseDTO responseDTO = new OHResponseDTO(OHResponseType.ERROR, OHResponseCode.INVALID_PARAMETER);
-        responseDTO.setValidationErrors(errors);
+        final OHValidationErrorDTO validationErrorDTO = new OHValidationErrorDTO(OHResponseCode.INVALID_PARAMETER.getValue(), errors, OHResponseCode.INVALID_PARAMETER);
 
-        return handleExceptionInternal(ex, responseDTO, headers, HttpStatus.BAD_REQUEST, request);
-    }
-
-    @Override
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
-                                                                  HttpHeaders headers, HttpStatus status, WebRequest request) {
-        OHResponseDTO responseDTO = new OHResponseDTO(OHResponseType.ERROR, OHResponseCode.INVALID_PARAMETER);
-        responseDTO.setMessage(OHResponseCode.INVALID_PARAMETER.getValue());
-        return handleExceptionInternal(ex, responseDTO, headers, HttpStatus.BAD_REQUEST, request);
+        return handleExceptionInternal(ex, validationErrorDTO, headers, HttpStatus.BAD_REQUEST, request);
     }
 
     @ExceptionHandler(value = {OHServiceException.class})
-    protected OHResponse handleOHServiceException(OHServiceException ex) {
-        return OHResponse.error(OHResponseCode.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
+    protected OHFailureDTO handleOHServiceException(OHServiceException ex) {
+        return OHResponse.failure(OHResponseCode.INTERNAL_SERVER_ERROR, OHResponseCode.INTERNAL_SERVER_ERROR.getValue());
     }
 
     @ExceptionHandler(value = {Exception.class})
-    protected OHResponse handleGenericException(Exception ex) {
-        return OHResponse.error(OHResponseCode.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
+    protected OHFailureDTO handleGenericException(Exception ex) {
+        return OHResponse.failure(OHResponseCode.INTERNAL_SERVER_ERROR, OHResponseCode.INTERNAL_SERVER_ERROR.getValue());
     }
 
     @ExceptionHandler(value = {OHAPIException.class})
-    protected OHResponse handleOHAPIException(OHAPIException ex) {
-        return OHResponse.error(OHResponseCode.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR).withMesage(ex.getMessage());
+    protected OHFailureDTO handleOHAPIException(OHAPIException ex) {
+        return OHResponse.failure(OHResponseCode.INTERNAL_SERVER_ERROR, ex.getMessage());
     }
 
 

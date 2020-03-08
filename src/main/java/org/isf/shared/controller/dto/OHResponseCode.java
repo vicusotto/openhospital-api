@@ -1,6 +1,7 @@
-package org.isf.shared.controller;
+package org.isf.shared.controller.dto;
 
 public enum OHResponseCode {
+
 
     SUCCESS("success"),
     INVALID_PARAMETER("Invalid parameter Error"),
@@ -28,4 +29,5 @@ public enum OHResponseCode {
     public void setValue(String value) {
         this.value = value;
     }
+
 }
